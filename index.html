@@ -3,18 +3,20 @@
   <head>
     <title>Isometric Tile Test</title>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+    <script type="module" src="game.js"></script>
     <script type="module" src="isometric.js"></script>
     <script type="module" src="buttons.js"></script>
     <script type="module" src="entities.js"></script>
     <script src="astar.js"></script>
     <script type="module" src="maps.js"></script>
     <script type="module" type="text/javascript">
-            import {Game, Isometric} from '/isometric.js';
-            import {Button} from '/buttons.js';
+            import {Game} from '/game.js';
+            import {Isometric} from '/isometric.js';
             import {Entity} from '/entities.js';
-            import {Action} from '/actions.js';
+            import {Action, Effect} from '/actions.js';
             import {Map} from '/maps.js';
             var isometric = new Isometric();
+            // TO DO: make this a dico 0: "tile.png"?
             var tiles = [
                 "images/land.png", //0
                 "images/water.png", //1
@@ -33,9 +35,17 @@
                 ];
             var blockingIds = [1];
             var map = new Map(tiles, map, blockingIds);
-            var action1 = new Action("Corps-à-corps", 3, 5);
-            var hero = new Entity(1, 4, "hero", true, "images/hero.png", 60, 6, 3, [action1]);
-            var enemy = new Entity(2, 4, "monster", false, "images/hero.png", 20, 6, 2, []);
+            var action1 = new Action("Corps-à-corps", 2, "cross", 1, 1,
+                                      // costPA, POmin, POmax
+                                     [new Effect("definitive", 1, true, 1, -1, 0, 0, 0)]);
+                                      // type, duration, allowMultiple, probability, PV, PM, PA, PO
+            var action2 = new Action("Ralentissement", 2, "diamond", 3, 5,
+                                     [new Effect("temporary", 3, true, 0, 0, 0, -2, 0)]);
+            var action3 = new Action("Poison", 2, "diamond", 3, 5,
+                                [new Effect("definitive", 3, false, 0, -5, 0, 0, 0)]);
+
+            var hero = new Entity(1, 4, "hero", true, "images/hero.png", 60, 6, 3, 0, [action1, action2, action3]);
+            var enemy = new Entity(2, 4, "monster", false, "images/hero.png", 20, 6, 2, 0, []);
             var entities = [hero, enemy];
             //var endOfTurnButton = new Button(-2, 11, "End of turn", "images/uipack-rpg/PNG/buttonLong_blue.png", "images/uipack-rpg/PNG/buttonLong_blue_pressed.png");
             var buttons = [];

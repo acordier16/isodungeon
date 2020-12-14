@@ -78,7 +78,7 @@ export class Isometric {
         return null;
     }
 
-    // to put in utils
+    // to put in entity.js
     tileWithinEntityRange(x, y, entity) {
         if (Math.abs(entity.x - x) + Math.abs(entity.y - y) <= entity.PM) {
             return true;
@@ -86,12 +86,43 @@ export class Isometric {
         return false;
     }
 
+    // to put in action.js
+    tileWithinActionRange(x, y, entity, action) {
+        var distanceX = Math.abs(entity.x - x);
+        var distanceY = Math.abs(entity.y - y);
+        if (action.rangeType == "diamond") {
+            if ((action.minPO <= (distanceX + distanceY)) && ((distanceX + distanceY) <= action.maxPO)) {
+                return true;
+            }
+        } else if (action.rangeType == "cross") {
+            if ((distanceX == 0 && action.minPO <= distanceY && distanceY <= action.maxPO) || (distanceY == 0 && action.minPO <= distanceX && distanceX <= action.maxPO)) {
+                return true;
+            }
+        } else if (action.rangeType == "circle") {
+            if (Math.pow(action.minPO, 2) <= Math.pow(distanceX, 2) + Math.pow(distanceY, 2) && Math.pow(distanceX, 2) + Math.pow(distanceY, 2) <= Math.pow(action.maxPO, 2)) {return true;}
+        }
+        // TO DO: square
+        return false;
+    }
+
+    // not use map but rather dimensions of isometric scene
+    drawPODiamondsForAction(entity, action, map) {
+        for (var Xi = 0; Xi < map.mapArray.length; Xi++) {
+            for (var Yi = 0; Yi < map.mapArray[0].length; Yi++) {
+                if (this.tileWithinActionRange(Xi, Yi, entity, action)) {
+                    this.drawDiamond(Xi, Yi, 'blue', true, 'blue', 0.5);
+                }
+            }
+        }
+    }
+
+    // not use map but rather dimensions of isometric scene
     drawPMDiamondsForEntity(entity, map) {
         for (var Xi = 0; Xi < map.mapArray.length; Xi++) {
             for (var Yi = 0; Yi < map.mapArray[0].length; Yi++) {
                 var path = map.pathFromEntityToTile(Xi, Yi, entity);
                 if (path.length > 0 && path.length <= entity.PM) {
-                    this.drawDiamond(Xi, Yi, 'green', true, 'green', 0.5);
+                    this.drawDiamond(Xi, Yi, 'orange', true, 'orange', 0.5);
                 }
             }
         }
@@ -107,128 +138,6 @@ export class Isometric {
         this.context.fillText(text, 20, 30);
     }
 
-    run(entities, buttons, map, phase) {
-        var self = this;
-        $(window).on('resize', function() {
-            self.updateCanvasSize();
-            self.redrawTiles(entities, "green", map);
-            self.drawEntities(entities);
-        });
-
-        var endOfTurnButton = document.getElementById("endOfTurn");
-        var actionButtons = document.getElementsByClassName("action");
-
-        endOfTurnButton.onclick = endOfTurn;
-        for (var i = 0; i < actionButtons.length; i++) {
-            actionButtons[i].onclick = action;
-        }
-
-        function endOfTurn() {
-            //alert("Evènement de click détecté");
-            if (phase == "PLAYER_TURN_MOVE" || phase == "PLAYER_TURN_ACTION") {
-                // phase = "ENEMY_TURN"; // change phase
-                // do enemy stuff
-                // this to be put at the end of ennemies phase
-                entities[0].PM = entities[0].basePM;
-                entities[0].PA = entities[0].basePA;
-                phase = "PLAYER_TURN_MOVE";
-            }
-        }
-
-        function action() {
-            if (phase == "PLAYER_TURN_MOVE") {
-                phase = "PLAYER_TURN_ACTION"
-                self.chosenAction = entities[0].actions[parseInt(this.value - 1)];
-            }
-        }
-
-        $(window).on('mousemove', function(e) {
-            e.pageX = e.pageX - self.tileColumnOffset / 2 - self.originX;
-            e.pageY = e.pageY - self.tileRowOffset / 2 - self.originY;
-            var tileX = Math.round(e.pageX / self.tileColumnOffset - e.pageY / self.tileRowOffset);
-            var tileY = Math.round(e.pageX / self.tileColumnOffset + e.pageY / self.tileRowOffset);
-            self.selectedTileX = tileX;
-            self.selectedTileY = tileY;
-
-            var targetTileColor = "green";
-            if (phase == "PLAYER_TURN_ACTION") {
-                targetTileColor = "blue";
-            }
-
-            self.redrawTiles(entities, targetTileColor, map);
-            if (self.isCursorOnMap()) {
-                // if entity there, draw its PM diamonds
-                var entity = self.entityAtThisPosition(self.selectedTileX, self.selectedTileY, entities)
-                if (phase == "PLAYER_TURN_MOVE") {
-                    if (entity != null) {
-                        self.drawPMDiamondsForEntity(entity, map);
-                    }
-                    // else if no entity, check if within player's PM range (if player's turn, in not in action mode)
-                    else {
-                        var path = map.pathFromEntityToTile(self.selectedTileX, self.selectedTileY, entities[0]);
-                        if (path.length > 0 && path.length <= entities[0].PM) {
-                            self.drawDiamond(entities[0].x, entities[0].y, 'green', true, 'green', 0.5);
-                            for (var i = 0; i < path.length; i++) {
-                                self.drawDiamond(path[i].x, path[i].y, 'green', true, 'green', 0.5);
-                            }
-                        }
-                    }
-                }
-            }
-            self.drawEntities(entities);
-
-            if (phase == "PLAYER_TURN_MOVE") {
-                self.displayTextTopLeft("It's your turn now");
-            }
-
-        });
-
-        $("#isocanvas").on('click', function(e) {
-            //self.showCoordinates = !self.showCoordinates;
-            if (phase == "PLAYER_TURN_MOVE") {
-                self.displayTextTopLeft("It's your turn now");
-            }
-
-            if (phase == "PLAYER_TURN_MOVE") {
-                // if cursor on map, check for path
-                if (self.isCursorOnMap()) {
-                    if (self.entityAtThisPosition(self.selectedTileX, self.selectedTileY, entities) == null) {
-                        var path = map.pathFromEntityToTile(self.selectedTileX, self.selectedTileY, entities[0]);
-                        if (path.length > 0 && path.length <= entities[0].PM) {
-                            map.graph.grid[entities[0].x][entities[0].y].weight = 1
-                            entities[0].x = self.selectedTileX;
-                            entities[0].y = self.selectedTileY;
-                            map.graph.grid[entities[0].x][entities[0].y].weight = 0
-                            entities[0].PM = entities[0].PM - path.length
-                        }
-                    }
-                }
-            }
-
-            if (phase == "PLAYER_TURN_ACTION") {
-                if (self.isCursorOnMap()) {
-                    var entity = self.entityAtThisPosition(self.selectedTileX, self.selectedTileY, entities);
-                    if (self.chosenAction.costPA <= entities[0].PA) {
-                        if (entity != null) {
-                            self.applyActionToEntity(self.chosenAction, entity)
-                        }
-                        entities[0].PA = entities[0].PA - self.chosenAction.costPA
-                    } else {
-                        self.displayTextTopLeft("Not enough action points (PA)");
-                        console.log("Not enough action points (PA)");
-                    }
-                }
-            }
-            phase = "PLAYER_TURN_MOVE";
-
-            self.redrawTiles(entities, "green", map);
-            self.drawEntities(entities);
-        });
-
-        this.updateCanvasSize();
-        this.redrawTiles(entities, "green", map);
-        this.drawEntities(entities);
-    }
 
 
     updateCanvasSize() {
@@ -258,7 +167,7 @@ export class Isometric {
             this.context.font = '14pt Arial';
             var entity = this.entityAtThisPosition(this.selectedTileX, this.selectedTileY, entities)
             if (entity != null) {
-                this.context.fillText(entity.name.concat(", ", entity.PV, "/", entity.basePV, " PV, ", entity.PA, "/", entity.basePA, " PA, ", entity.PM, "/", entity.basePM, " PM"), 20, 60);
+                this.context.fillText(entity.name.concat(", ", entity.basePV, "(+", entity.PV-entity.basePV, ")/", entity.initialPV, " PV, ", entity.basePA, "(+", entity.PA-entity.basePA,")/", entity.initialPA, " PA, ", entity.basePM, "(+", entity.PM-entity.basePM, ")/", entity.initialPM, " PM"), 20, 60);
             }
         }
     }
@@ -302,30 +211,3 @@ export class Isometric {
         this.context.globalAlpha = 1;
     }
 };
-
-export class Game {
-    constructor(isometric, entities, buttons, map) {
-        this.isometric = isometric;
-        this.entities = entities;
-        this.buttons = buttons;
-        this.map = map
-        this.phase = "PLAYER_TURN_MOVE";
-    }
-
-    load() {
-
-        this.chosenAction = undefined;
-        this.map.loadEntitiesOnGraph(this.entities);
-        this.isometric.load(this.map);
-        this.isometric.run(this.entities, this.buttons, this.map, this.phase);
-    }
-
-    applyActionToEntity(action, entity) {
-        entity.PV = Math.max(entity.PV - action.damages, 0);
-        if (entity.PV == 0) {
-            var index = this.entities.indexOf(entity);
-            this.entities.splice(index, 1); // remove entity
-            console.log("entity is dead");
-        }
-    }
-}
