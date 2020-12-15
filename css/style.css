@@ -34,26 +34,26 @@ body {
 }
 
 .standard {
-    background-image: url("images/uipack-rpg/PNG/buttonLong_blue.png");
+    background-image: url("../images/uipack-rpg/PNG/buttonLong_blue.png");
     width:190px;
     height:49px;
 }
 
 .standard:active {
-    background-image: url("images/uipack-rpg/PNG/buttonLong_blue_pressed.png");
+    background-image: url("../images/uipack-rpg/PNG/buttonLong_blue_pressed.png");
     height:45px;
     margin: 4px 0px 0px 0px;
 }
 
 .action {
-    background-image: url("images/uipack-rpg/PNG/buttonSquare_blue.png");
+    background-image: url("../images/uipack-rpg/PNG/buttonSquare_blue.png");
     width:45px;
     height:49px;
     text-indent: -99999px;
   }
 
 .action:active {
-    background-image: url("images/uipack-rpg/PNG/buttonSquare_blue_pressed.png");
+    background-image: url("../images/uipack-rpg/PNG/buttonSquare_blue_pressed.png");
     width:45px;
     height:45px;
     margin: 5px 0px 0px 0px;

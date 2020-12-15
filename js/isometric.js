@@ -191,30 +191,54 @@ export class Isometric {
                 this.context.fillText(
                     entity.name.concat(
                         ", ",
-                        entity.basePV,
-                        "(+",
-                        entity.PV - entity.basePV,
-                        ")/",
+                        entity.PV,
+                        "/",
                         entity.initialPV,
                         " PV, ",
-                        entity.basePA,
-                        "(+",
-                        entity.PA - entity.basePA,
-                        ")/",
+                        entity.PA,
+                        "/",
                         entity.initialPA,
                         " PA, ",
-                        entity.basePM,
-                        "(+",
-                        entity.PM - entity.basePM,
-                        ")/",
+                        entity.PM,
+                        "/",
                         entity.initialPM,
                         " PM"
                     ),
                     20,
                     60
                 );
+
+                // display effect info
+                var effectStringForDelta = function (delta, pointName) {
+                    if (delta > 0) {
+                        return "".concat("+", delta, " ", pointName, ", ");
+                    } else if (delta < 0) {
+                        return "".concat(delta, " ", pointName, ", ");
+                    } else {
+                        return "";
+                    }
+                };
+                var lineCounter = 0;
+                for (var i = 0; i < entity.effects.length; i++) {
+                    var effect = entity.effects[i];
+                    if (effect.type == "temporary") {
+                        var effectString = "";
+                        effectString = effectString.concat(effectStringForDelta(effect.deltaPV, "PV"));
+                        effectString = effectString.concat(effectStringForDelta(effect.deltaPA, "PA"));
+                        effectString = effectString.concat(effectStringForDelta(effect.deltaPM, "PM"));
+                        effectString = effectString.concat(effectStringForDelta(effect.deltaPO, "PO"));
+                        effectString = effectString.slice(0, effectString.length - 2); // remove last comma and space
+                        effectString = effectString.concat(" (", effect.duration, " turns left)");
+                        this.context.fillText(effectString, 20, 80 + lineCounter * 20);
+                        lineCounter++;
+                    }
+                }
             }
         }
+    }
+
+    isTileOnMap(x, y) {
+        return x >= 0 && x < this.Xtiles && y >= 0 && y < this.Ytiles;
     }
 
     isCursorOnMap() {

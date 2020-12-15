@@ -24,7 +24,13 @@ export class Entity {
 
         this.effects = [];
         this.sprite = new Image();
-        this.sprite.src = this.spritePath
+        this.sprite.src = this.spritePath;
+    }
+
+    move(x, y, pathLength) {
+        this.x = x;
+        this.y = y;
+        this.PM = this.PM - pathLength;
     }
 
     setPointsAsBasePoints() {
@@ -32,6 +38,11 @@ export class Entity {
         this.PA = this.basePA;
         this.PM = this.basePM;
         this.PO = this.basePO;
+    }
+
+    restorePMAndPA() {
+        this.PM = this.basePM;
+        this.PA = this.basePA;
     }
 
     addEffect(effect) {
@@ -44,28 +55,57 @@ export class Entity {
     }
 
     removeEffect(effect) {
-        var index = this.effects.indexOf(effect)
-        this.effects.splice(index, 1); // remove effect
+        var index = this.effects.indexOf(effect);
+        this.effects.splice(index, 1);
         console.log("Removed effect", effect, "from entity");
     }
 
-    applyDefinitiveEffects(nextTurn) {
+    applyDefinitiveEffect(effect) {
+        this.basePV = Math.max(this.basePV + effect.deltaPV, 0);
+        this.basePM = Math.max(this.basePM + effect.deltaPM, 0);
+        this.basePA = Math.max(this.basePA + effect.deltaPA, 0);
+        this.basePO = Math.max(this.basePO + effect.deltaPO, 0);
+    }
+
+    applyTemporaryEffect(effect) {
+        this.PV = Math.max(this.PV + effect.deltaPV, 0);
+        this.PM = Math.max(this.PM + effect.deltaPM, 0);
+        this.PA = Math.max(this.PA + effect.deltaPA, 0);
+        this.PO = Math.max(this.PO + effect.deltaPO, 0);
+    }
+
+    applyEffect(effect) {
+        if (effect.type == "temporary") {
+            this.applyTemporaryEffect(effect);
+        } else if (effect.type == "definitive") {
+            this.applyDefinitiveEffect(effect);
+        }
+    }
+
+    applyDefinitiveEffects() {
         var effectsToRemove = [];
         for (var i = 0; i < this.effects.length; i++) {
             if (this.effects[i].type == "definitive") {
-                this.basePV = Math.max(this.basePV + this.effects[i].deltaPV, 0);
-                this.basePM = Math.max(this.basePM + this.effects[i].deltaPM, 0);
-                this.basePA = Math.max(this.basePA + this.effects[i].deltaPA, 0);
-                this.basePO = Math.max(this.basePO + this.effects[i].deltaPO, 0);
+                this.applyDefinitiveEffect(this.effects[i]);
+            }
+        }
+    }
 
-                // if effect duration is over, remove it
-                if (nextTurn) {
-                    this.effects[i].duration--;
-                    if (this.effects[i].duration == 0) {
-                        effectsToRemove.push(this.effects[i]);
-                    }
-                    this.setPointsAsBasePoints();
-                }
+    applyTemporaryEffects() {
+        this.setPointsAsBasePoints();
+        for (var i = 0; i < this.effects.length; i++) {
+            if (this.effects[i].type == "temporary") {
+                this.applyTemporaryEffect(this.effects[i]);
+            }
+        }
+    }
+
+    reduceEffectsDurationAndRemoveFinishedEffects() {
+        var effectsToRemove = [];
+        for (var i = 0; i < this.effects.length; i++) {
+            this.effects[i].duration--;
+            if (this.effects[i].duration + 1 <= 0) {
+                effectsToRemove.push(this.effects[i]);
             }
         }
         for (var i = 0; i < effectsToRemove.length; i++) {
@@ -73,27 +113,9 @@ export class Entity {
         }
     }
 
-    applyTemporaryEffects(nextTurn) {
-        var effectsToRemove = [];
-        this.setPointsAsBasePoints();
-        for (var i = 0; i < this.effects.length; i++) {
-            if (this.effects[i].type == "temporary") {
-                this.PV = Math.max(this.PV + this.effects[i].deltaPV, 0);
-                this.PM = Math.max(this.PM + this.effects[i].deltaPM, 0);
-                this.PA = Math.max(this.PA + this.effects[i].deltaPA, 0);
-                this.PO = Math.max(this.PO + this.effects[i].deltaPO, 0);
-
-                // if effect duration is over, remove it
-                if (nextTurn) {
-                    this.effects[i].duration--;
-                    if (this.effects[i].duration == 0) {
-                        effectsToRemove.push(this.effects[i]);
-                    }
-                }
-            }
-        }
-        for (var i = 0; i < effectsToRemove.length; i++) {
-            this.removeEffect(effectsToRemove[i]);
-        }
+    updateEffects() {
+        this.reduceEffectsDurationAndRemoveFinishedEffects();
+        this.applyDefinitiveEffects();
+        this.applyTemporaryEffects();
     }
 }

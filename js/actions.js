@@ -22,13 +22,15 @@ export class Effect {
     }
 
     // to put in utils?
-    getRandomArbitrary(min, max) {
-        return Math.random() * (max - min) + min;
+    getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     sample_delta(delta) {
-        if (typeof delta == Array) {
-            return this.getRandomArbitrary(delta[0], delta[delta.length - 1]);
+        if (Array.isArray(delta)) {
+            return this.getRandomInt(delta[0], delta[delta.length - 1]);
         } else {
             return delta;
         }
@@ -36,16 +38,11 @@ export class Effect {
 
     sample_deltas() {
         if (this.probability >= Math.random()) {
-            //return [this.sample_delta(this.deltaPV),
-            //       this.sample_delta(this.deltaPM),
-            //       this.sample_delta(this.deltaPA),
-            //       this.sample_delta(this.deltaPO)];
-            this.deltaPV = this.sample_delta(this.deltaPV); // sampling won't work right now, we need a new Effect object for every new effect
+            this.deltaPV = this.sample_delta(this.deltaPV);
             this.deltaPM = this.sample_delta(this.deltaPM);
             this.deltaPA = this.sample_delta(this.deltaPA);
             this.deltaPO = this.sample_delta(this.deltaPO);
         } else {
-            //return 0, 0, 0, 0;
             this.deltaPV = 0;
             this.deltaPM = 0;
             this.deltaPA = 0;
