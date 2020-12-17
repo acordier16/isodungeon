@@ -6,8 +6,10 @@ import { Map } from "/js/maps.js";
 var isometric = new Isometric();
 // TO DO: make this a dico 0: "tile.png"?
 var tiles = [
-    "images/land.png", //0
+    //"images/land.png", //0
+    "images/kenneyDungeonPack_2.3/Isometric/stoneUneven_S.png",
     "images/water.png", //1
+    "images/kenneyDungeonPack_2.3/Isometric/dirt_E.png",
 ];
 var map = [
     [1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -31,14 +33,14 @@ var action1 = new Action(
     1,
     // costPA, POmin, POmax
     //[new Effect("definitive", 0, true, 1, [-3, -1], 0, 0, 0)]
-    [new Effect("definitive", 0, true, 1, -1, 0, 0, 0)]
+    [new Effect("definitive", 0, true, 1, -5, 0, 0, 0)]
 );
 // type, duration, allowMultiple, probability, PV, PM, PA, PO
 var action2 = new Action("Ralentissement", 2, "diamond", 3, 5, [new Effect("temporary", 3, true, 1, 0, 0, -2, 0)]);
 var action3 = new Action("Poison", 2, "diamond", 3, 5, [new Effect("definitive", 3, false, 1, -5, 0, 0, 0)]);
 
-var hero = new Entity(1, 4, "hero", true, "images/hero.png", 60, 6, 3, 0, [action1, action2, action3]);
-var enemy = new Entity(2, 4, "monster", false, "images/hero.png", 20, 6, 2, 0, []);
+var hero = new Entity(1, 4, "Player", true, "images/hero.png", 60, 6, 3, 0, [action1, action2, action3]);
+var enemy = new Entity(2, 4, "Enemy", false, "images/hero.png", 20, 6, 2, 0, []);
 var entities = [hero, enemy];
 //var endOfTurnButton = new Button(-2, 11, "End of turn", "images/uipack-rpg/PNG/buttonLong_blue.png", "images/uipack-rpg/PNG/buttonLong_blue_pressed.png");
 var buttons = [];

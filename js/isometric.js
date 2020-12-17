@@ -163,7 +163,7 @@ export class Isometric {
 
     updateCanvasSize() {
         var width = $(window).width();
-        var height = $(window).height() - 120;
+        var height = $(window).height() - 250;
 
         this.context.canvas.width = width;
         this.context.canvas.height = height;
@@ -175,37 +175,48 @@ export class Isometric {
     redrawTiles(entities, targetTileColor, map) {
         this.context.canvas.width = this.context.canvas.width;
 
+        // tile background
+        //for (var Xi = 30; Xi >= -10; Xi--) {
+        //    for (var Yi = -10; Yi < 30; Yi++) {
+        //        this.drawTile(Xi, Yi, 2);
+        //    }
+        //}
+
         for (var Xi = this.Xtiles - 1; Xi >= 0; Xi--) {
             for (var Yi = 0; Yi < this.Ytiles; Yi++) {
                 var imageIndex = map.mapArray[Xi][Yi];
                 this.drawTile(Xi, Yi, imageIndex);
             }
         }
+
         if (this.isCursorOnMap()) {
             this.drawDiamond(this.selectedTileX, this.selectedTileY, targetTileColor, true, targetTileColor, 0.75);
             this.context.fillStyle = "yellow";
             var idx = map.mapArray[this.selectedTileX][this.selectedTileY];
             this.context.font = "14pt Arial";
             var entity = this.entityAtThisPosition(this.selectedTileX, this.selectedTileY, entities);
+
+            // DISPLAY IN RIGHT-CONSOLE
+            document.getElementById("console").innerHTML = "";
             if (entity != null) {
-                this.context.fillText(
-                    entity.name.concat(
-                        ", ",
-                        entity.PV,
-                        "/",
-                        entity.initialPV,
-                        " PV, ",
-                        entity.PA,
-                        "/",
-                        entity.initialPA,
-                        " PA, ",
-                        entity.PM,
-                        "/",
-                        entity.initialPM,
-                        " PM"
-                    ),
-                    20,
-                    60
+                // display entity info
+                var entityStats = "".concat(
+                    entity.name,
+                    "<br><span style='color:green;'>",
+                    entity.PV,
+                    "/",
+                    entity.initialPV,
+                    " PV ",
+                    "</span><span style='color:blue;'>",
+                    entity.PA,
+                    "/",
+                    entity.initialPA,
+                    " PA ",
+                    "</span><span style='color:orange;'>",
+                    entity.PM,
+                    "/",
+                    entity.initialPM,
+                    " PM</span>"
                 );
 
                 // display effect info
@@ -218,7 +229,7 @@ export class Isometric {
                         return "";
                     }
                 };
-                var lineCounter = 0;
+                var entityEffectsStats = "";
                 for (var i = 0; i < entity.effects.length; i++) {
                     var effect = entity.effects[i];
                     if (effect.type == "temporary") {
@@ -228,11 +239,11 @@ export class Isometric {
                         effectString = effectString.concat(effectStringForDelta(effect.deltaPM, "PM"));
                         effectString = effectString.concat(effectStringForDelta(effect.deltaPO, "PO"));
                         effectString = effectString.slice(0, effectString.length - 2); // remove last comma and space
-                        effectString = effectString.concat(" (", effect.duration, " turns left)");
-                        this.context.fillText(effectString, 20, 80 + lineCounter * 20);
-                        lineCounter++;
+                        effectString = effectString.concat(" (", effect.duration, " turn(s) left)");
+                        entityEffectsStats = entityEffectsStats.concat(effectString, "<br>");
                     }
                 }
+                document.getElementById("console").innerHTML = entityStats.concat("<br>", entityEffectsStats);
             }
         }
     }

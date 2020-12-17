@@ -57,7 +57,9 @@ export class Game {
         if (entity.PV == 0) {
             var index = this.entities.indexOf(entity);
             this.entities.splice(index, 1);
-            console.log("entity", entity, "is dead");
+            document.getElementById("chat").innerHTML = document
+                .getElementById("chat")
+                .innerHTML.concat("<b>", entity.name, "</b> is dead.<br>");
         }
     }
 
@@ -88,7 +90,7 @@ export class Game {
                         [self.entities[0].x, self.entities[0].y - 1],
                         [self.entities[0].x, self.entities[0].y + 1],
                     ];
-                    var shortestPath = undefined;
+                    var shortestPath = [];
                     for (var j = 0; j < tilesNextToPlayer.length; j++) {
                         // if already on a tile next to player, do nothing
                         if (
@@ -105,11 +107,13 @@ export class Game {
                                 tilesNextToPlayer[j][1],
                                 self.entities[i]
                             );
-                            if (shortestPath == undefined) {
-                                shortestPath = path;
-                            }
-                            if (path.length < shortestPath.length && 0 < path.length) {
-                                shortestPath = path;
+                            if (0 < path.length) {
+                                if (shortestPath.length == 0) {
+                                    shortestPath = path;
+                                }
+                                if (path.length < shortestPath.length) {
+                                    shortestPath = path;
+                                }
                             }
                         }
                     }

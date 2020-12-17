@@ -10,19 +10,27 @@
     <body>
         <canvas id="isocanvas"></canvas>
         <div class="interface">
-            <div class="line">
-                <input class="button action" type="button" id="action" , value="1" />
-                <input class="button action" type="button" id="action" , value="2" />
-                <input class="button action" type="button" id="action" , value="3" />
-                <input class="button action" type="button" id="action" , value="4" />
-                <input class="button standard" type="button" id="endOfTurn" value="End of turn" />
-            </div>
-            <div class="line">
-                <input class="button action" type="button" id="action" , value="5" />
-                <input class="button action" type="button" id="action" , value="6" />
-                <input class="button action" type="button" id="action" , value="7" />
-                <input class="button action" type="button" id="action" , value="8" />
-                <input class="button standard" type="button" id="help" value="Help" />
+            <div class="consoles-container">
+                <div class="chat-container">
+                    <div id="chat" class="chat"></div>
+                </div>
+                <div id="console" class="console"></div>
+                <div class="console-center">
+                    <div class="line">
+                        <input class="button action" type="button" id="action" , value="1" />
+                        <input class="button action" type="button" id="action" , value="2" />
+                        <input class="button action" type="button" id="action" , value="3" />
+                        <input class="button action" type="button" id="action" , value="4" />
+                        <input class="button standard" type="button" id="endOfTurn" value="End of turn" />
+                    </div>
+                    <div class="line">
+                        <input class="button action" type="button" id="action" , value="5" />
+                        <input class="button action" type="button" id="action" , value="6" />
+                        <input class="button action" type="button" id="action" , value="7" />
+                        <input class="button action" type="button" id="action" , value="8" />
+                        <input class="button standard" type="button" id="help" value="Help" />
+                    </div>
+                </div>
             </div>
         </div>
     </body>

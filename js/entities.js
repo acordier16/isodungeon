@@ -79,6 +79,7 @@ export class Entity {
             this.applyTemporaryEffect(effect);
         } else if (effect.type == "definitive") {
             this.applyDefinitiveEffect(effect);
+            this.setPointsAsBasePoints();
         }
     }
 
@@ -89,6 +90,7 @@ export class Entity {
                 this.applyDefinitiveEffect(this.effects[i]);
             }
         }
+        this.setPointsAsBasePoints();
     }
 
     applyTemporaryEffects() {
