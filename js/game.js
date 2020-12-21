@@ -1,4 +1,5 @@
 import { Effect } from "/js/actions.js";
+import { addTextLineToConsole, addPositiveDurationEffectTextLineToConsole } from "/js/utils.js";
 
 export class Game {
     constructor(isometric, entities, buttons, map) {
@@ -13,14 +14,7 @@ export class Game {
         this.chosenAction = undefined;
         this.map.loadEntitiesOnGraph(this.entities);
         this.isometric.load(this.map);
-
-        //var endOfTurnButton = document.getElementById("endOfTurn");
-        var actionButtons = document.getElementsByClassName("action");
-        //endOfTurnButton.onclick = this.endOfTurn;
-        for (var i = 0; i < actionButtons.length; i++) {
-            actionButtons[i].onclick = this.action;
-        }
-
+        this.isometric.drawScene(this.entities, this.map);
         this.run();
     }
 
@@ -31,6 +25,32 @@ export class Game {
             this.map.graph.grid[x][y].weight = 0;
             entity.move(x, y, path.length);
         }
+    }
+
+    splashEffect(text, x, y) {
+        var context = this.isometric.context;
+        var self = this;
+        // disable mouse moving event
+        $("#isocanvas").off("mousemove");
+        function fadeOut(text, x, y) {
+            var [alpha, textYpos] = [1.0, y],
+                interval = setInterval(function () {
+                    // drawing the scene
+                    self.isometric.drawScene(self.entities, self.map);
+                    context.fillStyle = "rgba(255, 0, 0, " + alpha + ")";
+                    context.font = "25pt Arial";
+                    context.fillText(text, x, textYpos);
+                    context.textAlign = "center";
+                    textYpos -= 5;
+                    alpha = alpha - 0.05; // fade out
+                    if (alpha < 0) {
+                        clearInterval(interval);
+                        // enable back mouse moving event
+                        $("#isocanvas").on("mousemove", (e) => self.mouseMoveCanvas(e));
+                    }
+                }, 30);
+        }
+        fadeOut(text, x, y);
     }
 
     applyActionToEntity(action, entity) {
@@ -48,7 +68,16 @@ export class Game {
             ); // clone the effect to allow applying multiple times the same effect, and sampling
             clonedEffect.sample_deltas(); // samples randomness of effect if any
             entity.addEffect(clonedEffect); // add effect to entities effect
+            if (clonedEffect.duration > 0) {
+                addPositiveDurationEffectTextLineToConsole(effect, entity.name);
+            }
             entity.applyEffect(clonedEffect); // immediately apply effect
+
+            var [offX, offY] = this.isometric.isometricToCartesian(entity.x, entity.y);
+            offX += this.isometric.tileRowOffset / 2;
+            offY -= entity.sprite.height / 2;
+
+            this.splashEffect("-5", offX, offY); // induces a bug
             this.removeEntityIfDead(entity); // remove entity if dead
         }
     }
@@ -57,10 +86,126 @@ export class Game {
         if (entity.PV == 0) {
             var index = this.entities.indexOf(entity);
             this.entities.splice(index, 1);
-            document.getElementById("chat").innerHTML = document
-                .getElementById("chat")
-                .innerHTML.concat("<b>", entity.name, "</b> is dead.<br>");
+            addTextLineToConsole("<b>".concat(entity.name, "</b> is dead."));
         }
+    }
+
+    mouseMoveCanvas(e) {
+        var self = this;
+        e.pageX = e.pageX - self.isometric.tileColumnOffset / 2 - self.isometric.originX;
+        e.pageY = e.pageY - self.isometric.tileRowOffset / 2 - self.isometric.originY;
+        self.isometric.selectedTileX = Math.round(
+            e.pageX / self.isometric.tileColumnOffset - e.pageY / self.isometric.tileRowOffset
+        );
+        self.isometric.selectedTileY = Math.round(
+            e.pageX / self.isometric.tileColumnOffset + e.pageY / self.isometric.tileRowOffset
+        );
+
+        var targetTileColor = "orange";
+        if (self.phase == "PLAYER_TURN_ACTION") {
+            targetTileColor = "blue";
+        }
+
+        self.isometric.redrawTiles(self.entities, targetTileColor, self.map);
+        if (self.phase == "PLAYER_TURN_MOVE") {
+            if (self.isometric.isCursorOnMap()) {
+                // if entity there, draw its PM diamonds
+                var entity = self.isometric.entityAtThisPosition(
+                    self.isometric.selectedTileX,
+                    self.isometric.selectedTileY,
+                    self.entities
+                );
+                if (entity != null) {
+                    self.isometric.drawPMDiamondsForEntity(entity, self.map);
+                }
+                // else if no entity, check if within player's PM range (if player's turn, in not in action mode)
+                else {
+                    var path = self.map.pathFromEntityToTile(
+                        self.isometric.selectedTileX,
+                        self.isometric.selectedTileY,
+                        self.entities[0]
+                    );
+                    if (path.length > 0 && path.length <= self.entities[0].PM) {
+                        self.isometric.drawDiamond(
+                            self.entities[0].x,
+                            self.entities[0].y,
+                            "orange",
+                            true,
+                            "orange",
+                            0.5
+                        );
+                        for (var i = 0; i < path.length; i++) {
+                            self.isometric.drawDiamond(path[i].x, path[i].y, "orange", true, "orange", 0.5);
+                        }
+                    }
+                }
+            }
+        } else if (self.phase == "PLAYER_TURN_ACTION") {
+            self.isometric.drawPODiamondsForAction(self.entities[0], self.chosenAction, self.map);
+        }
+        self.isometric.drawEntities(self.entities);
+
+        if (self.phase == "PLAYER_TURN_MOVE") {
+            self.isometric.displayTextTopLeft("It's your turn now");
+        }
+    }
+
+    clickCanvas(e) {
+        var self = this;
+        //self.showCoordinates = !self.showCoordinates;
+        if (self.phase == "PLAYER_TURN_MOVE") {
+            self.isometric.displayTextTopLeft("It's your turn now");
+        }
+
+        if (self.phase == "PLAYER_TURN_MOVE") {
+            // if cursor on map, check for path
+            if (self.isometric.isCursorOnMap()) {
+                if (
+                    self.isometric.entityAtThisPosition(
+                        self.isometric.selectedTileX,
+                        self.isometric.selectedTileY,
+                        self.entities
+                    ) == null
+                ) {
+                    self.moveEntityIfPossible(
+                        self.isometric.selectedTileX,
+                        self.isometric.selectedTileY,
+                        self.entities[0]
+                    );
+                }
+            }
+        }
+
+        if (self.phase == "PLAYER_TURN_ACTION") {
+            if (self.isometric.isCursorOnMap()) {
+                if (
+                    self.isometric.tileWithinActionRange(
+                        self.isometric.selectedTileX,
+                        self.isometric.selectedTileY,
+                        self.entities[0],
+                        self.chosenAction
+                    )
+                ) {
+                    var entity = self.isometric.entityAtThisPosition(
+                        self.isometric.selectedTileX,
+                        self.isometric.selectedTileY,
+                        self.entities
+                    );
+                    if (self.chosenAction.costPA <= self.entities[0].PA) {
+                        if (entity != null) {
+                            self.applyActionToEntity(self.chosenAction, entity);
+                        }
+                        self.entities[0].PA = self.entities[0].PA - self.chosenAction.costPA;
+                    } else {
+                        self.isometric.displayTextTopLeft("Not enough action points (PA)");
+                        console.log("Not enough action points (PA)");
+                    }
+                }
+            }
+        }
+        self.phase = "PLAYER_TURN_MOVE";
+
+        self.isometric.drawScene(self.entities, self.map);
     }
 
     run() {
@@ -77,8 +222,8 @@ export class Game {
             if (self.phase == "PLAYER_TURN_MOVE" || self.phase == "PLAYER_TURN_ACTION") {
                 self.phase = "ENEMIES_TURN";
                 for (var i = 1; i < self.entities.length; i++) {
+                    addTextLineToConsole("It is ".concat("<b>", self.entities[i].name, "</b> turn now."));
                     // restore PA/PM at the beggining of the entity turn
-                    // then remove finished effects and apply currently applying effects
                     self.entities[i].restorePMAndPA();
                     self.entities[i].updateEffects();
                     self.removeEntityIfDead(self.entities[i]);
@@ -129,6 +274,7 @@ export class Game {
                 // this to be put at the end of ennemies phase
                 //
                 self.phase = "PLAYER_TURN_MOVE";
+                addTextLineToConsole("It is ".concat("<b>", self.entities[0].name, "</b> turn now."));
                 // restore PA/PM at the beggining of the entity turn
                 // then remove finished effects and apply currently applying effects
                 self.entities[0].restorePMAndPA();
@@ -137,137 +283,13 @@ export class Game {
             }
         };
 
-        // button clicking
         $(".action").on("click", action);
         $("#endOfTurn").on("click", endOfTurn);
-
-        // resize event
+        $("#isocanvas").on("mousemove", (e) => self.mouseMoveCanvas(e));
+        $("#isocanvas").on("click", (e) => self.clickCanvas(e));
         $(window).on("resize", function () {
-            self.isometric.updateCanvasSize();
-            self.isometric.redrawTiles(self.entities, "orange", self.map);
-            self.isometric.drawEntities(self.entities);
+            self.isometric.drawScene(self.entities, self.map);
         });
-
-        // mousemouve event
-        $("#isocanvas").on("mousemove", function (e) {
-            e.pageX = e.pageX - self.isometric.tileColumnOffset / 2 - self.isometric.originX;
-            e.pageY = e.pageY - self.isometric.tileRowOffset / 2 - self.isometric.originY;
-            self.isometric.selectedTileX = Math.round(
-                e.pageX / self.isometric.tileColumnOffset - e.pageY / self.isometric.tileRowOffset
-            );
-            self.isometric.selectedTileY = Math.round(
-                e.pageX / self.isometric.tileColumnOffset + e.pageY / self.isometric.tileRowOffset
-            );
-
-            var targetTileColor = "orange";
-            if (self.phase == "PLAYER_TURN_ACTION") {
-                targetTileColor = "blue";
-            }
-
-            self.isometric.redrawTiles(self.entities, targetTileColor, self.map);
-            if (self.phase == "PLAYER_TURN_MOVE") {
-                if (self.isometric.isCursorOnMap()) {
-                    // if entity there, draw its PM diamonds
-                    var entity = self.isometric.entityAtThisPosition(
-                        self.isometric.selectedTileX,
-                        self.isometric.selectedTileY,
-                        self.entities
-                    );
-                    if (entity != null) {
-                        self.isometric.drawPMDiamondsForEntity(entity, self.map);
-                    }
-                    // else if no entity, check if within player's PM range (if player's turn, in not in action mode)
-                    else {
-                        var path = self.map.pathFromEntityToTile(
-                            self.isometric.selectedTileX,
-                            self.isometric.selectedTileY,
-                            self.entities[0]
-                        );
-                        if (path.length > 0 && path.length <= self.entities[0].PM) {
-                            self.isometric.drawDiamond(
-                                self.entities[0].x,
-                                self.entities[0].y,
-                                "orange",
-                                true,
-                                "orange",
-                                0.5
-                            );
-                            for (var i = 0; i < path.length; i++) {
-                                self.isometric.drawDiamond(path[i].x, path[i].y, "orange", true, "orange", 0.5);
-                            }
-                        }
-                    }
-                }
-            } else if (self.phase == "PLAYER_TURN_ACTION") {
-                self.isometric.drawPODiamondsForAction(self.entities[0], self.chosenAction, self.map);
-            }
-            self.isometric.drawEntities(self.entities);
-
-            if (self.phase == "PLAYER_TURN_MOVE") {
-                self.isometric.displayTextTopLeft("It's your turn now");
-            }
-        });
-
-        $("#isocanvas").on("click", function (e) {
-            //self.showCoordinates = !self.showCoordinates;
-            if (self.phase == "PLAYER_TURN_MOVE") {
-                self.isometric.displayTextTopLeft("It's your turn now");
-            }
-
-            if (self.phase == "PLAYER_TURN_MOVE") {
-                // if cursor on map, check for path
-                if (self.isometric.isCursorOnMap()) {
-                    if (
-                        self.isometric.entityAtThisPosition(
-                            self.isometric.selectedTileX,
-                            self.isometric.selectedTileY,
-                            self.entities
-                        ) == null
-                    ) {
-                        self.moveEntityIfPossible(
-                            self.isometric.selectedTileX,
-                            self.isometric.selectedTileY,
-                            self.entities[0]
-                        );
-                    }
-                }
-            }
-
-            if (self.phase == "PLAYER_TURN_ACTION") {
-                if (self.isometric.isCursorOnMap()) {
-                    if (
-                        self.isometric.tileWithinActionRange(
-                            self.isometric.selectedTileX,
-                            self.isometric.selectedTileY,
-                            self.entities[0],
-                            self.chosenAction
-                        )
-                    ) {
-                        var entity = self.isometric.entityAtThisPosition(
-                            self.isometric.selectedTileX,
-                            self.isometric.selectedTileY,
-                            self.entities
-                        );
-                        if (self.chosenAction.costPA <= self.entities[0].PA) {
-                            if (entity != null) {
-                                self.applyActionToEntity(self.chosenAction, entity);
-                            }
-                            self.entities[0].PA = self.entities[0].PA - self.chosenAction.costPA;
-                        } else {
-                            self.isometric.displayTextTopLeft("Not enough action points (PA)");
-                            console.log("Not enough action points (PA)");
-                        }
-                    }
-                }
-            }
-            self.phase = "PLAYER_TURN_MOVE";
-
-            self.isometric.redrawTiles(self.entities, "orange", self.map);
-            self.isometric.drawEntities(self.entities);
-        });
-
-        this.isometric.updateCanvasSize();
-        this.isometric.redrawTiles(this.entities, "orange", this.map);
-        this.isometric.drawEntities(this.entities);
+        self.isometric.drawScene(self.entities, self.map);
     }
 }

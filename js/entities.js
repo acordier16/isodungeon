@@ -1,3 +1,5 @@
+import { addDefinitiveEffectTextLineToConsole } from "/js/utils.js";
+
 export class Entity {
     constructor(x, y, name, isPlayer, spritePath, basePV, basePA, basePM, basePO, actions) {
         this.x = x;
@@ -65,6 +67,7 @@ export class Entity {
         this.basePM = Math.max(this.basePM + effect.deltaPM, 0);
         this.basePA = Math.max(this.basePA + effect.deltaPA, 0);
         this.basePO = Math.max(this.basePO + effect.deltaPO, 0);
+        addDefinitiveEffectTextLineToConsole(effect, this.name);
     }
 
     applyTemporaryEffect(effect) {

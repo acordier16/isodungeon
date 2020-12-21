@@ -36,50 +36,6 @@ export class Isometric {
         }
     }
 
-    drawEntities(entities) {
-        for (var i = 0; i < entities.length; i++) {
-            this.drawEntity(entities[i]);
-        }
-    }
-
-    drawEntity(entity) {
-        var offX =
-            (entity.x * this.tileColumnOffset) / 2 +
-            (entity.y * this.tileColumnOffset) / 2 +
-            this.originX +
-            entity.sprite.width / 2;
-        var offY =
-            (entity.y * this.tileRowOffset) / 2 -
-            (entity.x * this.tileRowOffset) / 2 +
-            this.originY -
-            entity.sprite.height / 2 -
-            this.tileRowOffset / 2;
-        this.context.drawImage(entity.sprite, offX, offY);
-    }
-
-    drawButtons(buttons) {
-        for (var i = 0; i < buttons.length; i++) {
-            this.drawButton(buttons[i]);
-        }
-    }
-
-    drawButton(button) {
-        var off = this.isometricToCartesian(button.x, button.y);
-        var offX = off[0];
-        var offY = off[1];
-        button.offX = offX - button.sprite.width / 2 + this.tileColumnOffset / 2;
-        button.offY = offY - button.sprite.height / 2 + this.tileRowOffset / 2;
-        this.context.drawImage(button.sprite, button.offX, button.offY);
-        this.context.font = button.font;
-        this.context.fillStyle = button.color;
-        this.context.textAlign = "center";
-        this.context.fillText(
-            button.text,
-            button.offX + button.sprite.width / 2,
-            button.offY + button.sprite.height / 2 + 5
-        );
-    }
-
     // to put in utils
     entityAtThisPosition(x, y, entities) {
         for (var i = 0; i < entities.length; i++) {
@@ -172,9 +128,13 @@ export class Isometric {
         this.originY = height / 2;
     }
 
-    redrawTiles(entities, targetTileColor, map) {
+    cleanCanvas() {
+        // this cleans the canvas
         this.context.canvas.width = this.context.canvas.width;
+    }
 
+    redrawTiles(entities, targetTileColor, map) {
+        this.cleanCanvas();
         // tile background
         //for (var Xi = 30; Xi >= -10; Xi--) {
         //    for (var Yi = -10; Yi < 30; Yi++) {
@@ -315,5 +275,32 @@ export class Isometric {
         this.context.stroke();
         this.context.lineWidth = 2;
         this.context.globalAlpha = 1;
+    }
+
+    drawEntity(entity) {
+        var offX =
+            (entity.x * this.tileColumnOffset) / 2 +
+            (entity.y * this.tileColumnOffset) / 2 +
+            this.originX +
+            entity.sprite.width / 2;
+        var offY =
+            (entity.y * this.tileRowOffset) / 2 -
+            (entity.x * this.tileRowOffset) / 2 +
+            this.originY -
+            entity.sprite.height / 2 -
+            this.tileRowOffset / 2;
+        this.context.drawImage(entity.sprite, offX, offY);
+    }
+
+    drawEntities(entities) {
+        for (var i = 0; i < entities.length; i++) {
+            this.drawEntity(entities[i]);
+        }
+    }
+
+    drawScene(entities, map) {
+        this.updateCanvasSize();
+        this.redrawTiles(entities, "orange", map);
+        this.drawEntities(entities);
     }
 }

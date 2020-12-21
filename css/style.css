@@ -23,14 +23,17 @@ body {
 }
 
 .chat-container {
+    /*overflow-y: scroll;*/
     height: 80px;
     width: 690px;
-    overflow: hidden;
     display: flex;
     padding-bottom: 10px;
 }
 
 .chat {
+    overflow-y: scroll;
+    height: 80px;
+    width: 690px;
     color: #fff;
     position: relative;
     align-self: flex-end;
