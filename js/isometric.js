@@ -22,16 +22,9 @@ export class Isometric {
         this.Xtiles = map.mapArray.length;
         this.Ytiles = map.mapArray[0].length;
         this.tileImages = new Array();
-        var loadedImages = 0;
-        var totalImages = map.tiles.length;
         // Load all the images before we run the app
         for (var i = 0; i < map.tiles.length; i++) {
             this.tileImages[i] = new Image();
-            //this.tileImages[i].onload = function() {
-            //    if (++loadedImages >= totalImages) {
-            //        self.run(entities, buttons, phase);
-            //    }
-            //};
             this.tileImages[i].src = map.tiles[i];
         }
     }
@@ -111,12 +104,6 @@ export class Isometric {
         ];
     }
 
-    displayTextTopLeft(text) {
-        this.context.fillStyle = "white";
-        this.context.font = "14pt Arial";
-        this.context.fillText(text, 20, 30);
-    }
-
     updateCanvasSize() {
         var width = $(window).width();
         var height = $(window).height() - 250;
@@ -151,32 +138,30 @@ export class Isometric {
 
         if (this.isCursorOnMap()) {
             this.drawDiamond(this.selectedTileX, this.selectedTileY, targetTileColor, true, targetTileColor, 0.75);
-            this.context.fillStyle = "yellow";
             var idx = map.mapArray[this.selectedTileX][this.selectedTileY];
-            this.context.font = "14pt Arial";
             var entity = this.entityAtThisPosition(this.selectedTileX, this.selectedTileY, entities);
 
             // DISPLAY IN RIGHT-CONSOLE
             document.getElementById("console").innerHTML = "";
             if (entity != null) {
                 // display entity info
+                // could be in utils
                 var entityStats = "".concat(
+                    "<div class='entity-info'>",
                     entity.name,
-                    "<br><span style='color:green;'>",
+                    "</div><div class='entity-info'>",
                     entity.PV,
                     "/",
                     entity.initialPV,
-                    " PV ",
-                    "</span><span style='color:blue;'>",
+                    " PV&nbsp;&nbsp;",
                     entity.PA,
                     "/",
                     entity.initialPA,
-                    " PA ",
-                    "</span><span style='color:orange;'>",
+                    " PA&nbsp;&nbsp;",
                     entity.PM,
                     "/",
                     entity.initialPM,
-                    " PM</span>"
+                    " PM</span></div>"
                 );
 
                 // display effect info
@@ -193,17 +178,17 @@ export class Isometric {
                 for (var i = 0; i < entity.effects.length; i++) {
                     var effect = entity.effects[i];
                     if (effect.type == "temporary") {
-                        var effectString = "";
+                        var effectString = "<div class='entity-info'><span style='font-size: 0.75em;'>";
                         effectString = effectString.concat(effectStringForDelta(effect.deltaPV, "PV"));
                         effectString = effectString.concat(effectStringForDelta(effect.deltaPA, "PA"));
                         effectString = effectString.concat(effectStringForDelta(effect.deltaPM, "PM"));
                         effectString = effectString.concat(effectStringForDelta(effect.deltaPO, "PO"));
                         effectString = effectString.slice(0, effectString.length - 2); // remove last comma and space
                         effectString = effectString.concat(" (", effect.duration, " turn(s) left)");
-                        entityEffectsStats = entityEffectsStats.concat(effectString, "<br>");
+                        entityEffectsStats = entityEffectsStats.concat(effectString, "</span></div>");
                     }
                 }
-                document.getElementById("console").innerHTML = entityStats.concat("<br>", entityEffectsStats);
+                document.getElementById("console").innerHTML = entityStats.concat(entityEffectsStats);
             }
         }
     }
@@ -299,7 +284,6 @@ export class Isometric {
     }
 
     drawScene(entities, map) {
-        this.updateCanvasSize();
         this.redrawTiles(entities, "orange", map);
         this.drawEntities(entities);
     }

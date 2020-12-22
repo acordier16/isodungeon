@@ -1,6 +1,8 @@
 export class Action {
-    constructor(name, costPA, rangeType, minPO, maxPO, effects) {
+    constructor(name, description, spritePath, costPA, rangeType, minPO, maxPO, effects) {
         this.name = name;
+        this.description = description;
+        this.spritePath = spritePath;
         this.costPA = costPA;
         this.rangeType = rangeType; // cross or diamond or circle or square
         this.minPO = minPO;

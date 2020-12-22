@@ -26,7 +26,9 @@ var map = [
 var blockingIds = [1];
 var map = new Map(tiles, map, blockingIds);
 var action1 = new Action(
-    "Corps-à-corps",
+    "Close combat",
+    "Inflicts 5 HP damages to the target.",
+    "images/Icons34x34byAilsEnglish2013/W_Sword011.png",
     2,
     "cross",
     1,
@@ -36,8 +38,26 @@ var action1 = new Action(
     [new Effect("definitive", 0, true, 1, -5, 0, 0, 0)]
 );
 // type, duration, allowMultiple, probability, PV, PM, PA, PO
-var action2 = new Action("Ralentissement", 2, "diamond", 3, 5, [new Effect("temporary", 3, true, 1, 0, 0, -2, 0)]);
-var action3 = new Action("Poison", 2, "diamond", 3, 5, [new Effect("definitive", 3, false, 1, -5, 0, 0, 0)]);
+var action2 = new Action(
+    "Slowdown",
+    "Removes 2 PA to the target for 3 turns",
+    "images/Icons34x34byAilsEnglish2013/S_Buff10.png",
+    2,
+    "diamond",
+    3,
+    5,
+    [new Effect("temporary", 3, true, 1, 0, 0, -2, 0)]
+);
+var action3 = new Action(
+    "Poison",
+    "Inflicts 5 HP damages to the target per turn for 3 turns.",
+    "images/Icons34x34byAilsEnglish2013/S_Poison03.png",
+    2,
+    "diamond",
+    3,
+    5,
+    [new Effect("definitive", 3, false, 1, -5, 0, 0, 0)]
+);
 
 var hero = new Entity(1, 4, "Player", true, "images/hero.png", 60, 6, 3, 0, [action1, action2, action3]);
 var enemy = new Entity(2, 4, "Enemy", false, "images/hero.png", 20, 6, 2, 0, []);

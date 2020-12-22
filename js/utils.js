@@ -39,23 +39,23 @@ export var addPositiveDurationEffectTextLineToConsole = function (effect, entity
 
 export var addDefinitiveEffectTextLineToConsole = function (effect, entityName) {
     if (effect.deltaPV < 0) {
-        addTextLineToConsole("".concat("<b>", entityName, "</b> loses ", -effect.deltaPV, " PV"));
+        addTextLineToConsole("".concat("<b>", entityName, "</b> loses ", -effect.deltaPV, " PV."));
     } else if (effect.deltaPV > 0) {
-        addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPV, " PV"));
+        addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPV, " PV."));
     }
     if (effect.deltaPM < 0) {
-        addTextLineToConsole("".concat("<b>", entityName, "</b> loses ", -effect.deltaPM, " PM"));
+        addTextLineToConsole("".concat("<b>", entityName, "</b> loses ", -effect.deltaPM, " PM."));
     } else if (effect.deltaPM > 0) {
-        addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPM, " PM"));
+        addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPM, " PM."));
     }
     if (effect.deltaPA < 0) {
-        addTextLineToConsole("".concat("<b>", entityName, "</b> loses ", -effect.deltaPA, " PA"));
+        addTextLineToConsole("".concat("<b>", entityName, "</b> loses ", -effect.deltaPA, " PA."));
     } else if (effect.deltaPA > 0) {
-        addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPA, " PA"));
+        addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPA, " PA."));
     }
     if (effect.deltaPO < 0) {
-        addTextLineToConsole("".concat("<b>", entityName, "</b> loses ", -effect.deltaPO, " PO"));
+        addTextLineToConsole("".concat("<b>", entityName, "</b> loses ", -effect.deltaPO, " PO."));
     } else if (effect.deltaPO > 0) {
-        addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPO, " PO"));
+        addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPO, " PO."));
     }
 };

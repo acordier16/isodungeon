@@ -22,8 +22,7 @@ body {
     padding: 15px;
 }
 
-.chat-container {
-    /*overflow-y: scroll;*/
+.interface-top {
     height: 80px;
     width: 690px;
     display: flex;
@@ -39,39 +38,55 @@ body {
     align-self: flex-end;
 }
 
+.interface-bottom {
+    display: flex;
+    flex-direction: row;
+}
+
 .console {
-    display: inline-block;
     background: transparent no-repeat;
-    background-position: center;
+    background-position: top;
     background-image: url("../images/uipack-rpg/PNG/buttonLong_blue_pressed_bigger.png");
-    width: 300px;
-    height: 95px;
-    text-align: center;
     color: #fff;
     text-shadow: 1px 1px 1px #000;
     outline: none;
-    vertical-align: text-top;
     font-size: 1.25em;
+    display: flex;
+    padding-top: 10px;
+    margin: 2px;
+    width: 300px;
+    background-size: 100% 100px; /* width and height*/
+    flex-direction: column; /* for text inside (entity info) */
+    align-items: center;
+    text-align: center;
+}
+
+.entity-info {
+    display: flex;
 }
 
 .console-center {
-    display: inline-block;
-    vertical-align: text-top;
+    display: flex;
+    flex-direction: column;
 }
 
 .line {
+    display: flex;
+    flex-direction: row;
 }
 
 .button {
+    display: flex;
+    justify-content: center;
     font-size: 1em;
     border: 0px;
-    background: transparent;
+    background: transparent no-repeat;
     background-position: center;
-    text-align: center;
     color: #fff;
     text-shadow: 1px 1px 1px #000;
     outline: none;
     opacity: 90%;
+    margin: 2px;
 }
 
 .button:hover {
@@ -89,15 +104,23 @@ body {
     height: 45px;
 }
 
-.action {
+.action-container {
     background-image: url("../images/uipack-rpg/PNG/buttonSquare_blue.png");
     width: 45px;
     height: 49px;
-    text-indent: -99999px;
 }
 
-.action:active {
+.action-container:active {
     background-image: url("../images/uipack-rpg/PNG/buttonSquare_blue_pressed.png");
     width: 45px;
     height: 45px;
+}
+
+.action {
+    background: transparent no-repeat;
+    background-position-x: center;
+    background-position-y: 5px;
+    width: 45px;
+    height: 49px;
+    text-indent: -99999px;
 }

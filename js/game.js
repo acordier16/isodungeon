@@ -14,7 +14,6 @@ export class Game {
         this.chosenAction = undefined;
         this.map.loadEntitiesOnGraph(this.entities);
         this.isometric.load(this.map);
-        this.isometric.drawScene(this.entities, this.map);
         this.run();
     }
 
@@ -30,9 +29,8 @@ export class Game {
     splashEffect(text, x, y) {
         var context = this.isometric.context;
         var self = this;
-        // disable mouse moving event
-        $("#isocanvas").off("mousemove");
         function fadeOut(text, x, y) {
+            $("#isocanvas").off("mousemove");
             var [alpha, textYpos] = [1.0, y],
                 interval = setInterval(function () {
                     // drawing the scene
@@ -77,7 +75,7 @@ export class Game {
             offX += this.isometric.tileRowOffset / 2;
             offY -= entity.sprite.height / 2;
 
-            this.splashEffect("-5", offX, offY); // induces a bug
+            this.splashEffect("-5", offX, offY);
             this.removeEntityIfDead(entity); // remove entity if dead
         }
     }
@@ -88,6 +86,33 @@ export class Game {
             this.entities.splice(index, 1);
             addTextLineToConsole("<b>".concat(entity.name, "</b> is dead."));
         }
+    }
+
+    mouseMoveInterface(e) {
+        document.getElementById("console").innerHTML = "";
+    }
+
+    mouseMoveAction(e) {
+        // display action info (could be in utils)
+        document.getElementById("console").innerHTML = "";
+        var action = this.entities[0].actions[parseInt(e.target.value) - 1];
+        var actionText = "";
+        actionText = actionText.concat("<div class='entity-info'>", action.name, "</div>");
+        actionText = actionText.concat(
+            "<div class='entity-info' style='font-size: 0.7em'>",
+            action.description,
+            "</div>"
+        );
+        actionText = actionText.concat(
+            "<div class='entity-info' style='font-size: 0.7em'>Cost: ",
+            action.costPA,
+            " PA. Range: ",
+            action.minPO,
+            "-",
+            action.maxPO,
+            ".</div>"
+        );
+        document.getElementById("console").innerHTML = actionText;
     }
 
     mouseMoveCanvas(e) {
@@ -144,18 +169,11 @@ export class Game {
             self.isometric.drawPODiamondsForAction(self.entities[0], self.chosenAction, self.map);
         }
         self.isometric.drawEntities(self.entities);
-
-        if (self.phase == "PLAYER_TURN_MOVE") {
-            self.isometric.displayTextTopLeft("It's your turn now");
-        }
     }
 
     clickCanvas(e) {
         var self = this;
         //self.showCoordinates = !self.showCoordinates;
-        if (self.phase == "PLAYER_TURN_MOVE") {
-            self.isometric.displayTextTopLeft("It's your turn now");
-        }
 
         if (self.phase == "PLAYER_TURN_MOVE") {
             // if cursor on map, check for path
@@ -193,12 +211,21 @@ export class Game {
                     );
                     if (self.chosenAction.costPA <= self.entities[0].PA) {
                         if (entity != null) {
+                            addTextLineToConsole(
+                                "".concat(
+                                    "<b>",
+                                    self.entities[0].name,
+                                    "</b>",
+                                    " uses <span style='font-style: italic;'>",
+                                    self.chosenAction.name,
+                                    "</span>."
+                                )
+                            );
                             self.applyActionToEntity(self.chosenAction, entity);
                         }
                         self.entities[0].PA = self.entities[0].PA - self.chosenAction.costPA;
                     } else {
-                        self.isometric.displayTextTopLeft("Not enough action points (PA)");
-                        console.log("Not enough action points (PA)");
+                        addTextLineToConsole("Not enough action points (PA) for the desired action.");
                     }
                 }
             }
@@ -210,6 +237,15 @@ export class Game {
 
     run() {
         var self = this;
+
+        var actionElements = document.getElementsByClassName("action");
+        for (var i = 0; i < Math.min(self.entities[0].actions.length, actionElements.length); i++) {
+            actionElements[i].style.backgroundImage = "".concat(
+                "url('../",
+                self.entities[0].actions[i].spritePath,
+                "')"
+            );
+        }
 
         var action = function () {
             if (self.phase == "PLAYER_TURN_MOVE" || self.phase == "PLAYER_TURN_ACTION") {
@@ -284,12 +320,15 @@ export class Game {
         };
 
         $(".action").on("click", action);
+        $(".action").on("mousemove", (e) => self.mouseMoveAction(e));
         $("#endOfTurn").on("click", endOfTurn);
         $("#isocanvas").on("mousemove", (e) => self.mouseMoveCanvas(e));
         $("#isocanvas").on("click", (e) => self.clickCanvas(e));
         $(window).on("resize", function () {
+            self.isometric.updateCanvasSize();
             self.isometric.drawScene(self.entities, self.map);
         });
+        self.isometric.updateCanvasSize();
         self.isometric.drawScene(self.entities, self.map);
     }
 }
