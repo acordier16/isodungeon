@@ -1,3 +1,4 @@
+// this file could be named "interface.js"
 export var addTextLineToConsole = function (text) {
     var chat = document.getElementById("chat");
     chat.innerHTML = chat.innerHTML.concat(text.concat("<br>"));
@@ -59,3 +60,72 @@ export var addDefinitiveEffectTextLineToConsole = function (effect, entityName) 
         addTextLineToConsole("".concat("<b>", entityName, "</b> wins ", effect.deltaPO, " PO."));
     }
 };
+
+export var displayEntityInfo = function (entity) {
+    document.getElementById("console").innerHTML = "";
+    if (entity != null) {
+        // display entity info
+        var entityStats = "".concat(
+            "<div class='entity-info' style='font-size: 1em;'>",
+            entity.name,
+            "</div><div class='entity-info' style='font-size: 0.85em;'>",
+            entity.PV,
+            "/",
+            entity.initialPV,
+            " PV&nbsp;&nbsp;",
+            entity.PA,
+            "/",
+            entity.initialPA,
+            " PA&nbsp;&nbsp;",
+            entity.PM,
+            "/",
+            entity.initialPM,
+            " PM</span></div>"
+        );
+
+        // display entity effect info
+        var effectStringForDelta = function (delta, pointName) {
+            if (delta > 0) {
+                return "".concat("+", delta, " ", pointName, ", ");
+            } else if (delta < 0) {
+                return "".concat(delta, " ", pointName, ", ");
+            } else {
+                return "";
+            }
+        };
+        var entityEffectsStats = "";
+        for (var i = 0; i < entity.effects.length; i++) {
+            var effect = entity.effects[i];
+            if (effect.type == "temporary") {
+                var effectString = "<div class='entity-info'><span style='font-size: 0.85em;'>";
+                effectString = effectString.concat(effectStringForDelta(effect.deltaPV, "PV"));
+                effectString = effectString.concat(effectStringForDelta(effect.deltaPA, "PA"));
+                effectString = effectString.concat(effectStringForDelta(effect.deltaPM, "PM"));
+                effectString = effectString.concat(effectStringForDelta(effect.deltaPO, "PO"));
+                effectString = effectString.slice(0, effectString.length - 2); // remove last comma and space
+                effectString = effectString.concat(" (", effect.duration, " turn(s) left)");
+                entityEffectsStats = entityEffectsStats.concat(effectString, "</span></div>");
+            }
+        }
+        document.getElementById("console").innerHTML = entityStats.concat(entityEffectsStats);
+    }
+};
+
+export var displayActionInfo = function (action) {
+    document.getElementById("console").innerHTML = "";
+    var actionText = "";
+    actionText = actionText.concat("<div class='entity-info'>", action.name, "</div>");
+    actionText = actionText.concat("<div class='entity-info' style='font-size: 0.7em'>", action.description, "</div>");
+    actionText = actionText.concat(
+        "<div class='entity-info' style='font-size: 0.7em'>Cost: ",
+        action.costPA,
+        " PA. Range: ",
+        action.minPO,
+        "-",
+        action.maxPO,
+        ".</div>"
+    );
+    document.getElementById("console").innerHTML = actionText;
+};
+
+// below could be the actual utils.js

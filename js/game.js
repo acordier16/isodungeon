@@ -1,5 +1,5 @@
 import { Effect } from "/js/actions.js";
-import { addTextLineToConsole, addPositiveDurationEffectTextLineToConsole } from "/js/utils.js";
+import { addTextLineToConsole, addPositiveDurationEffectTextLineToConsole, displayActionInfo } from "/js/utils.js";
 
 export class Game {
     constructor(isometric, entities, buttons, map) {
@@ -34,7 +34,7 @@ export class Game {
             var [alpha, textYpos] = [1.0, y],
                 interval = setInterval(function () {
                     // drawing the scene
-                    self.isometric.drawScene(self.entities, self.map);
+                    self.isometric.redrawScene(self.entities, self.map, self.phase, self.chosenAction);
                     context.fillStyle = "rgba(255, 0, 0, " + alpha + ")";
                     context.font = "25pt Arial";
                     context.fillText(text, x, textYpos);
@@ -85,6 +85,7 @@ export class Game {
             var index = this.entities.indexOf(entity);
             this.entities.splice(index, 1);
             addTextLineToConsole("<b>".concat(entity.name, "</b> is dead."));
+            // TODO: remove entity from graph!
         }
     }
 
@@ -93,29 +94,12 @@ export class Game {
     }
 
     mouseMoveAction(e) {
-        // display action info (could be in utils)
-        document.getElementById("console").innerHTML = "";
         var action = this.entities[0].actions[parseInt(e.target.value) - 1];
-        var actionText = "";
-        actionText = actionText.concat("<div class='entity-info'>", action.name, "</div>");
-        actionText = actionText.concat(
-            "<div class='entity-info' style='font-size: 0.7em'>",
-            action.description,
-            "</div>"
-        );
-        actionText = actionText.concat(
-            "<div class='entity-info' style='font-size: 0.7em'>Cost: ",
-            action.costPA,
-            " PA. Range: ",
-            action.minPO,
-            "-",
-            action.maxPO,
-            ".</div>"
-        );
-        document.getElementById("console").innerHTML = actionText;
+        displayActionInfo(action);
     }
 
     mouseMoveCanvas(e) {
+        document.getElementById("console").innerHTML = "";
         var self = this;
         e.pageX = e.pageX - self.isometric.tileColumnOffset / 2 - self.isometric.originX;
         e.pageY = e.pageY - self.isometric.tileRowOffset / 2 - self.isometric.originY;
@@ -126,54 +110,11 @@ export class Game {
             e.pageX / self.isometric.tileColumnOffset + e.pageY / self.isometric.tileRowOffset
         );
 
-        var targetTileColor = "orange";
-        if (self.phase == "PLAYER_TURN_ACTION") {
-            targetTileColor = "blue";
-        }
-
-        self.isometric.redrawTiles(self.entities, targetTileColor, self.map);
-        if (self.phase == "PLAYER_TURN_MOVE") {
-            if (self.isometric.isCursorOnMap()) {
-                // if entity there, draw its PM diamonds
-                var entity = self.isometric.entityAtThisPosition(
-                    self.isometric.selectedTileX,
-                    self.isometric.selectedTileY,
-                    self.entities
-                );
-                if (entity != null) {
-                    self.isometric.drawPMDiamondsForEntity(entity, self.map);
-                }
-                // else if no entity, check if within player's PM range (if player's turn, in not in action mode)
-                else {
-                    var path = self.map.pathFromEntityToTile(
-                        self.isometric.selectedTileX,
-                        self.isometric.selectedTileY,
-                        self.entities[0]
-                    );
-                    if (path.length > 0 && path.length <= self.entities[0].PM) {
-                        self.isometric.drawDiamond(
-                            self.entities[0].x,
-                            self.entities[0].y,
-                            "orange",
-                            true,
-                            "orange",
-                            0.5
-                        );
-                        for (var i = 0; i < path.length; i++) {
-                            self.isometric.drawDiamond(path[i].x, path[i].y, "orange", true, "orange", 0.5);
-                        }
-                    }
-                }
-            }
-        } else if (self.phase == "PLAYER_TURN_ACTION") {
-            self.isometric.drawPODiamondsForAction(self.entities[0], self.chosenAction, self.map);
-        }
-        self.isometric.drawEntities(self.entities);
+        self.isometric.redrawScene(self.entities, self.map, self.phase, self.chosenAction);
     }
 
     clickCanvas(e) {
         var self = this;
-        //self.showCoordinates = !self.showCoordinates;
 
         if (self.phase == "PLAYER_TURN_MOVE") {
             // if cursor on map, check for path
@@ -197,10 +138,9 @@ export class Game {
         if (self.phase == "PLAYER_TURN_ACTION") {
             if (self.isometric.isCursorOnMap()) {
                 if (
-                    self.isometric.tileWithinActionRange(
+                    self.entities[0].tileWithinActionRange(
                         self.isometric.selectedTileX,
                         self.isometric.selectedTileY,
-                        self.entities[0],
                         self.chosenAction
                     )
                 ) {
@@ -231,8 +171,7 @@ export class Game {
             }
         }
         self.phase = "PLAYER_TURN_MOVE";
-
-        self.isometric.drawScene(self.entities, self.map);
+        self.isometric.redrawScene(self.entities, self.map, self.phase, self.chosenAction);
     }
 
     run() {
@@ -326,9 +265,9 @@ export class Game {
         $("#isocanvas").on("click", (e) => self.clickCanvas(e));
         $(window).on("resize", function () {
             self.isometric.updateCanvasSize();
-            self.isometric.drawScene(self.entities, self.map);
+            self.isometric.redrawScene(self.entities, self.map, self.phase, self.chosenAction);
         });
         self.isometric.updateCanvasSize();
-        self.isometric.drawScene(self.entities, self.map);
+        self.isometric.redrawScene(self.entities, self.map, self.phase, self.chosenAction);
     }
 }

@@ -32,7 +32,34 @@ export class Entity {
     move(x, y, pathLength) {
         this.x = x;
         this.y = y;
-        this.PM = this.PM - pathLength;
+        this.PM = this.PM - pathLength; // should have a check for PM < 0!
+    }
+
+    tileWithinActionRange(x, y, action) {
+        var distanceX = Math.abs(this.x - x);
+        var distanceY = Math.abs(this.y - y);
+        // below function should be in action.js? to take into account: entity bonus PO
+        if (action.rangeType == "diamond") {
+            if (action.minPO <= distanceX + distanceY && distanceX + distanceY <= action.maxPO) {
+                return true;
+            }
+        } else if (action.rangeType == "cross") {
+            if (
+                (distanceX == 0 && action.minPO <= distanceY && distanceY <= action.maxPO) ||
+                (distanceY == 0 && action.minPO <= distanceX && distanceX <= action.maxPO)
+            ) {
+                return true;
+            }
+        } else if (action.rangeType == "circle") {
+            if (
+                Math.pow(action.minPO, 2) <= Math.pow(distanceX, 2) + Math.pow(distanceY, 2) &&
+                Math.pow(distanceX, 2) + Math.pow(distanceY, 2) <= Math.pow(action.maxPO, 2)
+            ) {
+                return true;
+            }
+        }
+        // TO DO: square
+        return false;
     }
 
     setPointsAsBasePoints() {

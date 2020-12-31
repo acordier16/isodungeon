@@ -1,4 +1,6 @@
-// A simple isometric tile renderer
+import { displayEntityInfo } from "/js/utils.js";
+
+// The isometric tile renderer
 export class Isometric {
     constructor() {
         this.tileColumnOffset = 100; // pixels
@@ -22,7 +24,6 @@ export class Isometric {
         this.Xtiles = map.mapArray.length;
         this.Ytiles = map.mapArray[0].length;
         this.tileImages = new Array();
-        // Load all the images before we run the app
         for (var i = 0; i < map.tiles.length; i++) {
             this.tileImages[i] = new Image();
             this.tileImages[i].src = map.tiles[i];
@@ -39,62 +40,31 @@ export class Isometric {
         return null;
     }
 
-    // to put in entity.js
-    tileWithinEntityRange(x, y, entity) {
-        if (Math.abs(entity.x - x) + Math.abs(entity.y - y) <= entity.PM) {
-            return true;
-        }
-        return false;
-    }
-
-    // to put in action.js
-    tileWithinActionRange(x, y, entity, action) {
-        var distanceX = Math.abs(entity.x - x);
-        var distanceY = Math.abs(entity.y - y);
-        if (action.rangeType == "diamond") {
-            if (action.minPO <= distanceX + distanceY && distanceX + distanceY <= action.maxPO) {
-                return true;
-            }
-        } else if (action.rangeType == "cross") {
-            if (
-                (distanceX == 0 && action.minPO <= distanceY && distanceY <= action.maxPO) ||
-                (distanceY == 0 && action.minPO <= distanceX && distanceX <= action.maxPO)
-            ) {
-                return true;
-            }
-        } else if (action.rangeType == "circle") {
-            if (
-                Math.pow(action.minPO, 2) <= Math.pow(distanceX, 2) + Math.pow(distanceY, 2) &&
-                Math.pow(distanceX, 2) + Math.pow(distanceY, 2) <= Math.pow(action.maxPO, 2)
-            ) {
-                return true;
-            }
-        }
-        // TO DO: square
-        return false;
-    }
-
-    // not use map but rather dimensions of isometric scene
-    drawPODiamondsForAction(entity, action, map) {
+    // in action.js
+    getPODiamondsForAction(entity, action, map) {
+        var PODiamondsTiles = [];
         for (var Xi = 0; Xi < map.mapArray.length; Xi++) {
             for (var Yi = 0; Yi < map.mapArray[0].length; Yi++) {
-                if (this.tileWithinActionRange(Xi, Yi, entity, action)) {
-                    this.drawDiamond(Xi, Yi, "blue", true, "blue", 0.5);
+                if (entity.tileWithinActionRange(Xi, Yi, action)) {
+                    PODiamondsTiles.push([Xi, Yi]);
                 }
             }
         }
+        return PODiamondsTiles;
     }
 
-    // not use map but rather dimensions of isometric scene
-    drawPMDiamondsForEntity(entity, map) {
+    // in entity.js
+    getPMDiamondsForEntity(entity, map) {
+        var PMDiamondsTiles = [];
         for (var Xi = 0; Xi < map.mapArray.length; Xi++) {
             for (var Yi = 0; Yi < map.mapArray[0].length; Yi++) {
                 var path = map.pathFromEntityToTile(Xi, Yi, entity);
                 if (path.length > 0 && path.length <= entity.PM) {
-                    this.drawDiamond(Xi, Yi, "orange", true, "orange", 0.5);
+                    PMDiamondsTiles.push([Xi, Yi]);
                 }
             }
         }
+        return PMDiamondsTiles;
     }
 
     isometricToCartesian(x, y) {
@@ -115,88 +85,6 @@ export class Isometric {
         this.originY = height / 2;
     }
 
-    cleanCanvas() {
-        // this cleans the canvas
-        this.context.canvas.width = this.context.canvas.width;
-    }
-
-    redrawTiles(entities, targetTileColor, map) {
-        this.cleanCanvas();
-        // tile background
-        //for (var Xi = 30; Xi >= -10; Xi--) {
-        //    for (var Yi = -10; Yi < 30; Yi++) {
-        //        this.drawTile(Xi, Yi, 2);
-        //    }
-        //}
-
-        for (var Xi = this.Xtiles - 1; Xi >= 0; Xi--) {
-            for (var Yi = 0; Yi < this.Ytiles; Yi++) {
-                var imageIndex = map.mapArray[Xi][Yi];
-                this.drawTile(Xi, Yi, imageIndex);
-            }
-        }
-
-        if (this.isCursorOnMap()) {
-            this.drawDiamond(this.selectedTileX, this.selectedTileY, targetTileColor, true, targetTileColor, 0.75);
-            var idx = map.mapArray[this.selectedTileX][this.selectedTileY];
-            var entity = this.entityAtThisPosition(this.selectedTileX, this.selectedTileY, entities);
-
-            // DISPLAY IN RIGHT-CONSOLE
-            document.getElementById("console").innerHTML = "";
-            if (entity != null) {
-                // display entity info
-                // could be in utils
-                var entityStats = "".concat(
-                    "<div class='entity-info'>",
-                    entity.name,
-                    "</div><div class='entity-info'>",
-                    entity.PV,
-                    "/",
-                    entity.initialPV,
-                    " PV&nbsp;&nbsp;",
-                    entity.PA,
-                    "/",
-                    entity.initialPA,
-                    " PA&nbsp;&nbsp;",
-                    entity.PM,
-                    "/",
-                    entity.initialPM,
-                    " PM</span></div>"
-                );
-
-                // display effect info
-                var effectStringForDelta = function (delta, pointName) {
-                    if (delta > 0) {
-                        return "".concat("+", delta, " ", pointName, ", ");
-                    } else if (delta < 0) {
-                        return "".concat(delta, " ", pointName, ", ");
-                    } else {
-                        return "";
-                    }
-                };
-                var entityEffectsStats = "";
-                for (var i = 0; i < entity.effects.length; i++) {
-                    var effect = entity.effects[i];
-                    if (effect.type == "temporary") {
-                        var effectString = "<div class='entity-info'><span style='font-size: 0.75em;'>";
-                        effectString = effectString.concat(effectStringForDelta(effect.deltaPV, "PV"));
-                        effectString = effectString.concat(effectStringForDelta(effect.deltaPA, "PA"));
-                        effectString = effectString.concat(effectStringForDelta(effect.deltaPM, "PM"));
-                        effectString = effectString.concat(effectStringForDelta(effect.deltaPO, "PO"));
-                        effectString = effectString.slice(0, effectString.length - 2); // remove last comma and space
-                        effectString = effectString.concat(" (", effect.duration, " turn(s) left)");
-                        entityEffectsStats = entityEffectsStats.concat(effectString, "</span></div>");
-                    }
-                }
-                document.getElementById("console").innerHTML = entityStats.concat(entityEffectsStats);
-            }
-        }
-    }
-
-    isTileOnMap(x, y) {
-        return x >= 0 && x < this.Xtiles && y >= 0 && y < this.Ytiles;
-    }
-
     isCursorOnMap() {
         return (
             this.selectedTileX >= 0 &&
@@ -204,6 +92,10 @@ export class Isometric {
             this.selectedTileY >= 0 &&
             this.selectedTileY < this.Ytiles
         );
+    }
+
+    isTileOnMap(x, y) {
+        return x >= 0 && x < this.Xtiles && y >= 0 && y < this.Ytiles;
     }
 
     drawTile(Xi, Yi, imageIndex) {
@@ -222,7 +114,11 @@ export class Isometric {
         }
     }
 
-    drawDiamond(Xi, Yi, color, fill = false, fillColor = undefined, fillAlpha = undefined) {
+    drawDiamond(Xi, Yi, color) {
+        var fill = true;
+        var fillColor = color;
+        var fillAlpha = 0.5;
+
         var offX = (Xi * this.tileColumnOffset) / 2 + (Yi * this.tileColumnOffset) / 2 + this.originX;
         var offY = (Yi * this.tileRowOffset) / 2 - (Xi * this.tileRowOffset) / 2 + this.originY;
 
@@ -277,14 +173,84 @@ export class Isometric {
         this.context.drawImage(entity.sprite, offX, offY);
     }
 
-    drawEntities(entities) {
-        for (var i = 0; i < entities.length; i++) {
-            this.drawEntity(entities[i]);
-        }
+    cleanCanvas() {
+        this.context.canvas.width = this.context.canvas.width;
     }
 
-    drawScene(entities, map) {
-        this.redrawTiles(entities, "orange", map);
-        this.drawEntities(entities);
+    redrawScene(entities, map, phase, chosenAction) {
+        this.cleanCanvas();
+
+        // pre-computing path to target cell and PO diamonds
+        var entityAtTargetedCell = null;
+        var pathToTargetedCell = [];
+        var PMDiamondsTiles = [];
+        var PODiamondsTiles = [];
+        var selectedTileColor = "orange";
+        if (this.isCursorOnMap()) {
+            if (phase == "PLAYER_TURN_MOVE") {
+                entityAtTargetedCell = this.entityAtThisPosition(this.selectedTileX, this.selectedTileY, entities);
+                if (entityAtTargetedCell == null) {
+                    pathToTargetedCell = map.pathFromEntityToTileWithEntityPMConstraint(
+                        this.selectedTileX,
+                        this.selectedTileY,
+                        entities[0]
+                    );
+                    pathToTargetedCell = pathToTargetedCell.map((element) => [element.x, element.y]);
+                } else {
+                    PMDiamondsTiles = this.getPMDiamondsForEntity(entityAtTargetedCell, map);
+                    // display entity info
+                    displayEntityInfo(entityAtTargetedCell);
+                }
+            } else if (phase == "PLAYER_TURN_ACTION") {
+                PODiamondsTiles = this.getPODiamondsForAction(entities[0], chosenAction, map);
+                selectedTileColor = "blue";
+            }
+        }
+
+        //drawing of tiles (respecting z-order), looping from cartesian-top to cartesian-bottom from cartesian-left to cartesian-right
+        var N = Math.max(this.Xtiles, this.Ytiles);
+        for (var i = 0; i < 2 * N - 1; i++) {
+            var coordinatesList = new Array(i + 1).fill(0).map((x, j) => [N - i + j - 1, j]);
+            coordinatesList = coordinatesList.filter(
+                (coordinate) =>
+                    0 <= coordinate[0] &&
+                    coordinate[0] < this.Xtiles &&
+                    0 <= coordinate[1] &&
+                    coordinate[1] < this.Ytiles
+            );
+            // coordinatesList will successively be (for a map of size (10, 10)):
+            // [[9, 0]] top tile
+            // [[8, 0], [9, 1]]
+            // [[7, 0], [8, 1], [9, 2]]
+            // [[6, 0], [7, 1], [8, 2], [9, 3]]
+            // etc. until bottom
+            for (var j = 0; j < coordinatesList.length; j++) {
+                var [x, y] = coordinatesList[j];
+                var imageIndex = map.mapArray[x][y];
+                // draw the tile
+                this.drawTile(x, y, imageIndex);
+                // draw diamond if in possible path, or in selected action range
+                var isTileInPathToTargetedCell = pathToTargetedCell.find(
+                    (element) => element[0] == x && element[1] == y
+                );
+                var isTileInPMDiamonds = PMDiamondsTiles.find((element) => element[0] == x && element[1] == y);
+                var isTileInPODiamonds = PODiamondsTiles.find((element) => element[0] == x && element[1] == y);
+                if (isTileInPathToTargetedCell || isTileInPMDiamonds) {
+                    this.drawDiamond(x, y, "orange");
+                }
+                if (isTileInPODiamonds) {
+                    this.drawDiamond(x, y, "blue");
+                }
+                // draw diamond for selected tile
+                if (x == this.selectedTileX && y == this.selectedTileY) {
+                    this.drawDiamond(x, y, selectedTileColor);
+                }
+                // draw any existing entity at tile
+                var entity = this.entityAtThisPosition(x, y, entities);
+                if (entity != null) {
+                    this.drawEntity(entity);
+                }
+            }
+        }
     }
 }
