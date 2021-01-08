@@ -1,5 +1,6 @@
 # isodungeon
 An isometric dungeon/roguelike game written in JS
+(work in progress)
 
 # inspiration / credits
 - A-star algorithm: https://github.com/bgrins/javascript-astar
